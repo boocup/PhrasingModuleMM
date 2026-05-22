@@ -3,6 +3,6 @@
 rack::Plugin* pluginInstance = nullptr;
 
 void init(rack::Plugin* p) {
-	pluginInstance = p;
-	p->addModel(modelPhrasing);
+    pluginInstance = p;
+    p->addModel(modelPhrasingMM);
 }

@@ -1,6 +1,6 @@
 {
-  "slug": "phrasing-module",
-  "name": "Phrasing Module",
+  "slug": "phrasing-module-mm",
+  "name": "PhrasingMM",
   "version": "2.0.0",
   "rackVersion": "2.6.6",
   "license": "MIT",
@@ -8,16 +8,16 @@
   "author": "THEREELPEET",
   "authorEmail": "buchhop@icloud.com",
   "authorUrl": "https://github.com/boocup",
-  "pluginUrl": "https://github.com/boocup/PhrasingModule",
-  "manualUrl": "https://github.com/boocup/PhrasingModule#readme",
-  "sourceUrl": "https://github.com/boocup/PhrasingModule",
-  "changelogUrl": "https://github.com/boocup/PhrasingModule/releases",
+  "pluginUrl": "https://github.com/boocup/PhrasingModuleMM",
+  "manualUrl": "https://github.com/boocup/PhrasingModuleMM#readme",
+  "sourceUrl": "https://github.com/boocup/PhrasingModuleMM",
+  "changelogUrl": "https://github.com/boocup/PhrasingModuleMM/releases",
   "minRackVersion": "2.4.0",
   "modules": [
     {
-      "slug": "phrasing",
-      "name": "Phrasing",
-      "description": "Phrasing and presence controller. Shapes rests, repeats, changes, and level-focused dynamics; intended to drive VCAs or Morph 4-style level CV inputs.",
+      "slug": "phrasingmm",
+      "name": "PhrasingMM",
+      "description": "Phrasing and presence controller. Shapes rests, repeats, changes, and level-focused dynamics; intended to drive VCAs or Morph 4-style level CV inputs. (MetaModule port)",
       "panel": "res/Phrasing.svg",
       "tags": ["Utility", "Random"]
     }

@@ -1,0 +1,12 @@
+{
+  "MetaModuleBrandName": "THEREELPEET",
+  "MetaModulePluginMaintainer": "Pete",
+  "MetaModulePluginMaintainerEmail": "buchhop@icloud.com",
+  "MetaModuleIncludedModules": [
+    {
+      "slug": "phrasingmm",
+      "name": "PhrasingMM",
+      "description": "Phrasing and presence controller (MetaModule port)"
+    }
+  ]
+}
