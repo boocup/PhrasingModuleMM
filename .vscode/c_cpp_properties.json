@@ -1,17 +1,24 @@
 {
     "configurations": [
         {
-            "name": "Mac",
+            "name": "MetaModule ARM",
             "includePath": [
-                "${workspaceFolder}/**",
-                "/Users/peterbuchhop/vcv-dev/Rack/include",
-                "/Users/peterbuchhop/vcv-dev/Rack/dep/include"
+                "${workspaceFolder}/src",
+                "/Users/peterbuchhop/vcv-dev/metamodule-plugin-sdk",
+                "/Users/peterbuchhop/vcv-dev/metamodule-plugin-sdk/core-interface",
+                "/Users/peterbuchhop/vcv-dev/metamodule-plugin-sdk/core-interface/CoreModules",
+                "/Users/peterbuchhop/vcv-dev/metamodule-plugin-sdk/rack-interface/include",
+                "/Users/peterbuchhop/vcv-dev/metamodule-plugin-sdk/rack-interface/dep/include",
+                "/Users/peterbuchhop/vcv-dev/metamodule-plugin-sdk/plugin-libc/include",
+                "/Users/peterbuchhop/vcv-dev/metamodule-plugin-sdk/cpputil"
             ],
-            "defines": [],
-            "compilerPath": "/usr/bin/clang",
-            "cStandard": "c11",
-            "cppStandard": "c++17",
-            "intelliSenseMode": "macos-clang-arm64"
+            "defines": [
+                "METAMODULE"
+            ],
+            "compilerPath": "/Applications/ArmGNUToolchain/12.3.rel1/arm-none-eabi/bin/arm-none-eabi-g++",
+            "cStandard": "gnu17",
+            "cppStandard": "gnu++20",
+            "intelliSenseMode": "linux-gcc-arm"
         }
     ],
     "version": 4
