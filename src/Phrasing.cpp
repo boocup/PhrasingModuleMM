@@ -1,7 +1,6 @@
 #include "plugin.hpp"
 #include <cmath>
 #include <algorithm>
-
 using namespace rack;
 
 struct Phrasing : Module {
@@ -56,15 +55,16 @@ struct Phrasing : Module {
     float laneOnTimer[4] = {0.f, 0.f, 0.f, 0.f};
     float gapTimer = 0.f;
     bool initialized = false;
+
     dsp::SchmittTrigger laneBtnTrig[4];
     dsp::SchmittTrigger trigIn[4];
+
     bool laneEnabled[4] = {true, true, true, true};
     bool laneEnabledInit = false;
 
     Phrasing();
     void process(const ProcessArgs& args) override;
 
-    // Helper functions
     float knobToSeconds(float d);
     float densityToGapSeconds(float density);
     float jitterMul(float amt);
@@ -74,7 +74,7 @@ struct PhrasingWidget : ModuleWidget {
     PhrasingWidget(Phrasing* module);
 };
 
-extern Model* modelPhrasingMM;
+Model* modelPhrasingMM = createModel<Phrasing, PhrasingWidget>("phrasingmm");
 
 // ====================== IMPLEMENTATION ======================
 
@@ -124,16 +124,14 @@ Phrasing::Phrasing() {
 }
 
 void Phrasing::process(const ProcessArgs& args) {
-    // Your full process code here (same as before)
     const float sr = args.sampleRate;
     const float dt = args.sampleTime;
 
+    float density = params[DENSITY_PARAM].getValue();
     if (inputs[DENSITY_CV_INPUT].isConnected()) {
-        const float cv = clamp(inputs[DENSITY_CV_INPUT].getVoltage() / 10.f, 0.f, 1.f);
-        params[DENSITY_PARAM].setValue(cv);
+        density = clamp(inputs[DENSITY_CV_INPUT].getVoltage() / 10.f, 0.f, 1.f);
     }
 
-    const float density = clamp(params[DENSITY_PARAM].getValue(), 0.f, 1.f);
     const float gapJitter = clamp(params[GAP_JITTER_PARAM].getValue(), 0.f, 1.f);
     const float durJitter = clamp(params[DURATION_JITTER_PARAM].getValue(), 0.f, 1.f);
     const bool guaranteeOne = params[GUARANTEE_ONE_PARAM].getValue() > 0.5f;
@@ -144,12 +142,14 @@ void Phrasing::process(const ProcessArgs& args) {
         clamp(params[WEIGHT3_PARAM].getValue(), 0.f, 1.f),
         clamp(params[WEIGHT4_PARAM].getValue(), 0.f, 1.f)
     };
+
     const float laneDurKnob[4] = {
         clamp(params[LANEDUR1_PARAM].getValue(), 0.f, 1.f),
         clamp(params[LANEDUR2_PARAM].getValue(), 0.f, 1.f),
         clamp(params[LANEDUR3_PARAM].getValue(), 0.f, 1.f),
         clamp(params[LANEDUR4_PARAM].getValue(), 0.f, 1.f)
     };
+
     const float laneFloor[4] = {
         clamp(params[FLOOR1_PARAM].getValue(), 0.f, 1.f),
         clamp(params[FLOOR2_PARAM].getValue(), 0.f, 1.f),
@@ -179,6 +179,7 @@ void Phrasing::process(const ProcessArgs& args) {
     }
 
     const bool laneActive[4] = { laneEnabled[0], laneEnabled[1], laneEnabled[2], laneEnabled[3] };
+
     const float durJitAmt = 0.50f * durJitter;
 
     for (int i = 0; i < 4; i++) {
@@ -256,12 +257,18 @@ void Phrasing::process(const ProcessArgs& args) {
             float bestW = -1.f;
             float sumW = 0.f;
             for (int i = 0; i < 4; i++) if (laneActive[i]) sumW += laneWeight[i];
+
             if (sumW <= 1e-6f) {
-                for (int i = 0; i < 4; i++) { if (laneActive[i]) { best = i; break; } }
+                for (int i = 0; i < 4; i++) { 
+                    if (laneActive[i]) { best = i; break; } 
+                }
             } else {
                 for (int i = 0; i < 4; i++) {
                     if (!laneActive[i]) continue;
-                    if (laneWeight[i] > bestW) { bestW = laneWeight[i]; best = i; }
+                    if (laneWeight[i] > bestW) { 
+                        bestW = laneWeight[i]; 
+                        best = i; 
+                    }
                 }
             }
             if (best >= 0) {
@@ -282,11 +289,14 @@ void Phrasing::process(const ProcessArgs& args) {
         const float laneBaseDur = knobToSeconds(laneDurKnob[i]);
         const float attackSec = clamp(laneBaseDur * 0.20f, 0.030f, 2.0f);
         const float releaseSec = clamp(laneBaseDur * 0.40f, 0.300f, 25.0f);
+
         const float aCoeff = onePoleCoeff(attackSec);
         const float rCoeff = onePoleCoeff(releaseSec);
+
         const float target = laneActive[i] ? laneTarget[i] : 0.f;
         const float cur = laneValue[i];
         const float coeff = (target > cur) ? aCoeff : rCoeff;
+
         laneValue[i] = target + (cur - target) * coeff;
         laneValue[i] = clamp(laneValue[i], 0.f, 1.f);
     }
@@ -309,7 +319,6 @@ void Phrasing::process(const ProcessArgs& args) {
     }
 }
 
-// Helper function definitions
 float Phrasing::knobToSeconds(float d) {
     const float minS = 5.0f;
     const float maxS = 90.0f;
@@ -333,10 +342,41 @@ PhrasingWidget::PhrasingWidget(Phrasing* module) {
     setModule(module);
     setPanel(createPanel(asset::plugin(pluginInstance, "res/Phrasing.png")));
 
-    addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, 0)));
-    addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, 0)));
-    addChild(createWidget<ThemedScrew>(Vec(RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-    addChild(createWidget<ThemedScrew>(Vec(box.size.x - 2 * RACK_GRID_WIDTH, RACK_GRID_HEIGHT - RACK_GRID_WIDTH)));
-}
+    // Much lower layout for 240px height
+    const float densityX = 73.f;
+    const float gapJitterX = 33.f;
+    const float durJitterX = 113.f;
+    const float guaranteeX = 143.f;
+    const float globalY = 28.f;
 
-Model* modelPhrasingMM = createModel<Phrasing, PhrasingWidget>("phrasingmm");
+    const float lane1X = 28.f;
+    const float lane2X = 68.f;
+    const float lane3X = 108.f;
+    const float lane4X = 148.f;
+
+    const float enY = 65.f;
+    const float lightY = 82.f;
+    const float weightY = 115.f;
+    const float laneDurY = 150.f;
+    const float floorY = 180.f;
+    const float outY = 217.f;
+    const float trigY = 200.f;
+
+    addParam(createParamCentered<RoundBlackKnob>(Vec(densityX, globalY), module, Phrasing::DENSITY_PARAM));
+    addParam(createParamCentered<RoundBlackKnob>(Vec(gapJitterX, globalY), module, Phrasing::GAP_JITTER_PARAM));
+    addParam(createParamCentered<RoundBlackKnob>(Vec(durJitterX, globalY), module, Phrasing::DURATION_JITTER_PARAM));
+    addParam(createParamCentered<CKSS>(Vec(guaranteeX, globalY), module, Phrasing::GUARANTEE_ONE_PARAM));
+
+    addInput(createInputCentered<PJ301MPort>(Vec(densityX, globalY + 28), module, Phrasing::DENSITY_CV_INPUT));
+
+    for (int i = 0; i < 4; i++) {
+        float x = lane1X + i * 40.f;
+        addParam(createParamCentered<TL1105>(Vec(x, enY), module, Phrasing::LANE1_ACTIVE_PARAM + i));
+        addChild(createLightCentered<MediumLight<GreenLight>>(Vec(x, lightY), module, Phrasing::LANE1_LIGHT + i));
+        addParam(createParamCentered<RoundBlackKnob>(Vec(x, weightY), module, Phrasing::WEIGHT1_PARAM + i));
+        addParam(createParamCentered<RoundBlackKnob>(Vec(x, laneDurY), module, Phrasing::LANEDUR1_PARAM + i));
+        addParam(createParamCentered<RoundBlackKnob>(Vec(x, floorY), module, Phrasing::FLOOR1_PARAM + i));
+        addOutput(createOutputCentered<PJ301MPort>(Vec(x, outY), module, Phrasing::OUT1_OUTPUT + i));
+        addInput(createInputCentered<PJ301MPort>(Vec(x, trigY), module, Phrasing::TRIG1_INPUT + i));
+    }
+}
