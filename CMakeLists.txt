@@ -14,9 +14,9 @@ endif()
 include(${METAMODULE_SDK_DIR}/plugin.cmake)
 
 # ====================== Project ======================
-project(PhrasingModuleMM 
-    VERSION 0.1 
-    DESCRIPTION "Phrasing Module for MetaModule" 
+project(PhrasingModuleMM
+    VERSION 2.0
+    DESCRIPTION "Phrasing and presence controller"
     LANGUAGES C CXX
 )
 
@@ -29,11 +29,16 @@ target_sources(PhrasingModuleMM PRIVATE
 
 target_include_directories(PhrasingModuleMM PRIVATE src)
 
+# Important for compatibility layer
+target_compile_definitions(PhrasingModuleMM PRIVATE
+    METAMODULE
+)
+
 # ====================== Create Plugin ======================
 create_plugin(
-    SOURCE_LIB      PhrasingModuleMM
-    PLUGIN_NAME     PhrasingModuleMM
-    PLUGIN_JSON     ${CMAKE_CURRENT_LIST_DIR}/plugin.json
-    SOURCE_ASSETS   ${CMAKE_CURRENT_LIST_DIR}/assets
-    DESTINATION     ${CMAKE_CURRENT_LIST_DIR}/metamodule-plugins
+    SOURCE_LIB PhrasingModuleMM
+    PLUGIN_NAME PhrasingModuleMM
+    PLUGIN_JSON ${CMAKE_CURRENT_LIST_DIR}/plugin.json
+    SOURCE_ASSETS ${CMAKE_CURRENT_LIST_DIR}/res
+    DESTINATION ${CMAKE_CURRENT_LIST_DIR}/metamodule-plugins
 )

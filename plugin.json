@@ -1,5 +1,5 @@
 {
-  "slug": "phrasing-module-mm",
+  "slug": "PhrasingModuleMM",
   "name": "PhrasingMM",
   "version": "2.0.0",
   "rackVersion": "2.6.6",
@@ -16,10 +16,10 @@
   "modules": [
     {
       "slug": "phrasingmm",
-      "name": "PhrasingMM",
-      "description": "Phrasing and presence controller. Shapes rests, repeats, changes, and level-focused dynamics; intended to drive VCAs or Morph 4-style level CV inputs. (MetaModule port)",
-      "panel": "res/Phrasing.svg",
-      "tags": ["Utility", "Random"]
+      "name": "Phrasing",
+      "description": "Phrasing and presence controller. Shapes rests, repeats, changes, and level-focused dynamics; intended to drive VCAs or Morph 4-style level CV inputs.",
+      "panel": "res/Phrasing.png",
+      "tags": ["Utility", "Random", "Controller"]
     }
   ]
 }

@@ -1,4 +1,7 @@
 #pragma once
 #include <rack.hpp>
 
-extern rack::Plugin* pluginInstance;
+using namespace rack;
+
+extern Plugin* pluginInstance;
+extern Model* modelPhrasingMM;

@@ -1,4 +1,8 @@
 #include "plugin.hpp"
 
-// Registration is handled in Phrasing.cpp
-// Do NOT add init() here
+Plugin* pluginInstance;
+
+void init(Plugin* p) {
+    pluginInstance = p;
+    p->addModel(modelPhrasingMM);
+}
