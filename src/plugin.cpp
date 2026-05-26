@@ -1,8 +1,8 @@
 #include "plugin.hpp"
 
-Plugin* pluginInstance;
+extern Plugin* pluginInstance;
 
-void init(Plugin* p) {
+void init_PhrasingModuleMM(Plugin* p) {
     pluginInstance = p;
     p->addModel(modelPhrasingMM);
 }
