@@ -342,41 +342,45 @@ PhrasingWidget::PhrasingWidget(Phrasing* module) {
     setModule(module);
     setPanel(createPanel(asset::plugin(pluginInstance, "res/Phrasing.png")));
 
-    // Much lower layout for 240px height
-    const float densityX = 73.f;
-    const float gapJitterX = 33.f;
-    const float durJitterX = 113.f;
-    const float guaranteeX = 143.f;
-    const float globalY = 28.f;
+    // VCV pixel coordinate space: X 0-150 (10HP), Y 0-380 (3U)
+    // Panel PNG: 107x272px (68.7 DPI); MM rotates portrait panels 90° CCW to landscape
+    // Landscape mapping: screen_x = orig_y * 0.716, screen_y = (150-orig_x) * 0.713
+    // SVG anchors: DENSITY_PARAM cy=58, OUT cy=120, PRESENCE cy=170
+    // SVG label paths: weight y≈168, dur y≈211, floor y≈248, trig y≈320, out y≈357
+    // Lane rects: x=6,40,74,108 w=32 h=276 y=90 → centers at x=22,56,90,124
+    const float laneSpacing = 39.f;
+    const float lane1X      = 24.f;
 
-    const float lane1X = 28.f;
-    const float lane2X = 68.f;
-    const float lane3X = 108.f;
-    const float lane4X = 148.f;
+    const float gapJitterX = 35.f;
+    const float densityX   = 81.f;
+    const float durJitterX = 126.f;
+    const float guaranteeX = 155.f;
+    const float globalY    = 46.f;    // portrait_y→display_x; 82→103 centers knobs over their labels
+    const float guaranteeY = 46.f;   // switch further right in landscape (display_x≈379)
 
-    const float enY = 65.f;
-    const float lightY = 82.f;
-    const float weightY = 115.f;
-    const float laneDurY = 150.f;
-    const float floorY = 180.f;
-    const float outY = 217.f;
-    const float trigY = 200.f;
+    const float enY      = 124.f;  // well inside gradient (starts y=90)
+    const float lightY   = 145.f;
+    const float weightY  = 171.f;  // matches SVG PRESENCE anchor cy=170
+    const float laneDurY = 220.f;
+    const float floorY   = 264.f;
+    const float trigY    = 306.f;  // SVG trig labels at y≈320
+    const float outY     = 347.f;  // SVG out labels at y≈357
 
-    addParam(createParamCentered<RoundBlackKnob>(Vec(densityX, globalY), module, Phrasing::DENSITY_PARAM));
     addParam(createParamCentered<RoundBlackKnob>(Vec(gapJitterX, globalY), module, Phrasing::GAP_JITTER_PARAM));
+    addParam(createParamCentered<RoundBlackKnob>(Vec(densityX, globalY), module, Phrasing::DENSITY_PARAM));
     addParam(createParamCentered<RoundBlackKnob>(Vec(durJitterX, globalY), module, Phrasing::DURATION_JITTER_PARAM));
-    addParam(createParamCentered<CKSS>(Vec(guaranteeX, globalY), module, Phrasing::GUARANTEE_ONE_PARAM));
+    addParam(createParamCentered<CKSS>(Vec(guaranteeX, guaranteeY), module, Phrasing::GUARANTEE_ONE_PARAM));
 
-    addInput(createInputCentered<PJ301MPort>(Vec(densityX, globalY + 28), module, Phrasing::DENSITY_CV_INPUT));
+    addInput(createInputCentered<PJ301MPort>(Vec(densityX, 85.f), module, Phrasing::DENSITY_CV_INPUT));
 
     for (int i = 0; i < 4; i++) {
-        float x = lane1X + i * 40.f;
+        float x = lane1X + i * laneSpacing + (i == 3 ? 1.f : 0.f);
         addParam(createParamCentered<TL1105>(Vec(x, enY), module, Phrasing::LANE1_ACTIVE_PARAM + i));
         addChild(createLightCentered<MediumLight<GreenLight>>(Vec(x, lightY), module, Phrasing::LANE1_LIGHT + i));
         addParam(createParamCentered<RoundBlackKnob>(Vec(x, weightY), module, Phrasing::WEIGHT1_PARAM + i));
         addParam(createParamCentered<RoundBlackKnob>(Vec(x, laneDurY), module, Phrasing::LANEDUR1_PARAM + i));
         addParam(createParamCentered<RoundBlackKnob>(Vec(x, floorY), module, Phrasing::FLOOR1_PARAM + i));
-        addOutput(createOutputCentered<PJ301MPort>(Vec(x, outY), module, Phrasing::OUT1_OUTPUT + i));
         addInput(createInputCentered<PJ301MPort>(Vec(x, trigY), module, Phrasing::TRIG1_INPUT + i));
+        addOutput(createOutputCentered<PJ301MPort>(Vec(x, outY), module, Phrasing::OUT1_OUTPUT + i));
     }
 }
