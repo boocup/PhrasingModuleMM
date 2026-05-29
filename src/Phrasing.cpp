@@ -5,8 +5,8 @@ using namespace rack;
 
 struct Phrasing : Module {
     enum ParamId {
-        DENSITY_PARAM,
         GAP_JITTER_PARAM,
+        DENSITY_PARAM,
         DURATION_JITTER_PARAM,
         GUARANTEE_ONE_PARAM,
         LANE1_ACTIVE_PARAM,
@@ -84,7 +84,7 @@ Phrasing::Phrasing() {
     configParam(DENSITY_PARAM, 0.f, 1.f, 0.7f, "Density", "%", 0.f, 100.f);
     configParam(GAP_JITTER_PARAM, 0.f, 1.f, 0.25f, "Gap Jitter", "%", 0.f, 100.f);
     configParam(DURATION_JITTER_PARAM, 0.f, 1.f, 0.25f, "Duration Jitter", "%", 0.f, 100.f);
-    configSwitch(GUARANTEE_ONE_PARAM, 0.f, 1.f, 0.f, "Guarantee one lane", {"Off", "On"});
+    configSwitch(GUARANTEE_ONE_PARAM, 0.f, 1.f, 1.f, "Guarantee one lane", {"Off", "On"});
 
     configInput(DENSITY_CV_INPUT, "Density CV");
     configInput(TRIG1_INPUT, "Trig 1");
@@ -348,30 +348,32 @@ PhrasingWidget::PhrasingWidget(Phrasing* module) {
     // SVG anchors: DENSITY_PARAM cy=58, OUT cy=120, PRESENCE cy=170
     // SVG label paths: weight y≈168, dur y≈211, floor y≈248, trig y≈320, out y≈357
     // Lane rects: x=6,40,74,108 w=32 h=276 y=90 → centers at x=22,56,90,124
-    const float laneSpacing = 39.f;
-    const float lane1X      = 24.f;
+    const float laneSpacing = 48.f;
+    const float lane1X      = 32.f;
 
-    const float gapJitterX = 35.f;
-    const float densityX   = 81.f;
-    const float durJitterX = 126.f;
-    const float guaranteeX = 155.f;
-    const float globalY    = 46.f;    // portrait_y→display_x; 82→103 centers knobs over their labels
-    const float guaranteeY = 46.f;   // switch further right in landscape (display_x≈379)
+    const float gapJitterX = 42.f;
+    const float densityX   = 104.f;
+    const float durJitterX = 159.f;
+    const float guaranteeX = 193.f;
+    // SVG canvas is now 150×265 (scaled from 380 to fill MM display after 90° rotation)
+    // All Y values scaled by 265/380 = 0.697 from prior 380-unit space
+    const float globalY    = 56.f;
+    const float guaranteeY = 56.f;
 
-    const float enY      = 124.f;  // well inside gradient (starts y=90)
-    const float lightY   = 145.f;
-    const float weightY  = 171.f;  // matches SVG PRESENCE anchor cy=170
-    const float laneDurY = 220.f;
-    const float floorY   = 264.f;
-    const float trigY    = 306.f;  // SVG trig labels at y≈320
-    const float outY     = 347.f;  // SVG out labels at y≈357
+    const float enY      = 104.f;
+    const float lightY   = 122.f;
+    const float weightY  = 150.f;
+    const float laneDurY = 203.f;
+    const float floorY   = 255.f;
+    const float trigY    = 305.f;
+    const float outY     = 341.f;
 
     addParam(createParamCentered<RoundBlackKnob>(Vec(gapJitterX, globalY), module, Phrasing::GAP_JITTER_PARAM));
     addParam(createParamCentered<RoundBlackKnob>(Vec(densityX, globalY), module, Phrasing::DENSITY_PARAM));
     addParam(createParamCentered<RoundBlackKnob>(Vec(durJitterX, globalY), module, Phrasing::DURATION_JITTER_PARAM));
     addParam(createParamCentered<CKSS>(Vec(guaranteeX, guaranteeY), module, Phrasing::GUARANTEE_ONE_PARAM));
 
-    addInput(createInputCentered<PJ301MPort>(Vec(densityX, 85.f), module, Phrasing::DENSITY_CV_INPUT));
+    // addInput(createInputCentered<PJ301MPort>(Vec(densityX, 69.f), module, Phrasing::DENSITY_CV_INPUT));
 
     for (int i = 0; i < 4; i++) {
         float x = lane1X + i * laneSpacing + (i == 3 ? 1.f : 0.f);
