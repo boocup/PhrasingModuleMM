@@ -43,10 +43,11 @@ struct Phrasing : Module {
         OUTPUTS_LEN
     };
     enum LightId {
-        LANE1_LIGHT,
-        LANE2_LIGHT,
-        LANE3_LIGHT,
-        LANE4_LIGHT,
+        LANE1_LIGHT_R, LANE1_LIGHT_G, LANE1_LIGHT_B,
+        LANE2_LIGHT_R, LANE2_LIGHT_G, LANE2_LIGHT_B,
+        LANE3_LIGHT_R, LANE3_LIGHT_G, LANE3_LIGHT_B,
+        LANE4_LIGHT_R, LANE4_LIGHT_G, LANE4_LIGHT_B,
+        GUARANTEE_LIGHT_R, GUARANTEE_LIGHT_G, GUARANTEE_LIGHT_B,
         LIGHTS_LEN
     };
 
@@ -57,10 +58,11 @@ struct Phrasing : Module {
     bool initialized = false;
 
     dsp::SchmittTrigger laneBtnTrig[4];
+    dsp::SchmittTrigger guaranteeBtnTrig;
     dsp::SchmittTrigger trigIn[4];
 
     bool laneEnabled[4] = {true, true, true, true};
-    bool laneEnabledInit = false;
+    bool guaranteeEnabled = true;
 
     Phrasing();
     void process(const ProcessArgs& args) override;
@@ -84,7 +86,7 @@ Phrasing::Phrasing() {
     configParam(DENSITY_PARAM, 0.f, 1.f, 0.7f, "Density", "%", 0.f, 100.f);
     configParam(GAP_JITTER_PARAM, 0.f, 1.f, 0.25f, "Gap Jitter", "%", 0.f, 100.f);
     configParam(DURATION_JITTER_PARAM, 0.f, 1.f, 0.25f, "Duration Jitter", "%", 0.f, 100.f);
-    configSwitch(GUARANTEE_ONE_PARAM, 0.f, 1.f, 1.f, "Guarantee one lane", {"Off", "On"});
+    configButton(GUARANTEE_ONE_PARAM, "Guarantee one lane");
 
     configInput(DENSITY_CV_INPUT, "Density CV");
     configInput(TRIG1_INPUT, "Trig 1");
@@ -117,10 +119,10 @@ Phrasing::Phrasing() {
     configOutput(OUT3_OUTPUT, "Lane CV III");
     configOutput(OUT4_OUTPUT, "Lane CV IV");
 
-    configLight(LANE1_LIGHT, "Lane 1");
-    configLight(LANE2_LIGHT, "Lane 2");
-    configLight(LANE3_LIGHT, "Lane 3");
-    configLight(LANE4_LIGHT, "Lane 4");
+    configLight(LANE1_LIGHT_R, "Lane 1");
+    configLight(LANE2_LIGHT_R, "Lane 2");
+    configLight(LANE3_LIGHT_R, "Lane 3");
+    configLight(LANE4_LIGHT_R, "Lane 4");
 }
 
 void Phrasing::process(const ProcessArgs& args) {
@@ -134,7 +136,9 @@ void Phrasing::process(const ProcessArgs& args) {
 
     const float gapJitter = clamp(params[GAP_JITTER_PARAM].getValue(), 0.f, 1.f);
     const float durJitter = clamp(params[DURATION_JITTER_PARAM].getValue(), 0.f, 1.f);
-    const bool guaranteeOne = params[GUARANTEE_ONE_PARAM].getValue() > 0.5f;
+    if (guaranteeBtnTrig.process(params[GUARANTEE_ONE_PARAM].getValue()))
+        guaranteeEnabled = !guaranteeEnabled;
+    const bool guaranteeOne = guaranteeEnabled;
 
     const float laneWeight[4] = {
         clamp(params[WEIGHT1_PARAM].getValue(), 0.f, 1.f),
@@ -157,19 +161,8 @@ void Phrasing::process(const ProcessArgs& args) {
         clamp(params[FLOOR4_PARAM].getValue(), 0.f, 1.f)
     };
 
-    if (!laneEnabledInit) {
-        laneEnabledInit = true;
-        for (int i = 0; i < 4; i++) {
-            laneEnabled[i] = true;
-            laneOnTimer[i] = 0.f;
-            laneTarget[i] = 0.f;
-            laneValue[i] = 0.f;
-        }
-    }
-
     for (int i = 0; i < 4; i++) {
-        const float v = params[LANE1_ACTIVE_PARAM + i].getValue();
-        if (laneBtnTrig[i].process(v)) {
+        if (laneBtnTrig[i].process(params[LANE1_ACTIVE_PARAM + i].getValue())) {
             laneEnabled[i] = !laneEnabled[i];
             if (!laneEnabled[i]) {
                 laneOnTimer[i] = 0.f;
@@ -313,10 +306,24 @@ void Phrasing::process(const ProcessArgs& args) {
     }
 
     for (int i = 0; i < 4; i++) {
-        const float base = laneActive[i] ? 0.15f : 0.f;
-        const float activity = laneActive[i] ? laneValue[i] : 0.f;
-        lights[LANE1_LIGHT + i].setBrightness(std::max(base, activity));
+        const int r = LANE1_LIGHT_R + i * 3;
+        const int g = LANE1_LIGHT_G + i * 3;
+        const int b = LANE1_LIGHT_B + i * 3;
+        if (!laneActive[i]) {
+            lights[r].setBrightness(1.f);
+            lights[g].setBrightness(0.f);
+            lights[b].setBrightness(0.f);
+        } else {
+            const float brightness = laneValue[i];
+            lights[r].setBrightness(brightness);
+            lights[g].setBrightness(brightness);
+            lights[b].setBrightness(brightness);
+        }
     }
+
+    lights[GUARANTEE_LIGHT_R].setBrightness(guaranteeEnabled ? 1.f : 1.f);
+    lights[GUARANTEE_LIGHT_G].setBrightness(guaranteeEnabled ? 1.f : 0.f);
+    lights[GUARANTEE_LIGHT_B].setBrightness(guaranteeEnabled ? 1.f : 0.f);
 }
 
 float Phrasing::knobToSeconds(float d) {
@@ -371,14 +378,15 @@ PhrasingWidget::PhrasingWidget(Phrasing* module) {
     addParam(createParamCentered<RoundBlackKnob>(Vec(gapJitterX, globalY), module, Phrasing::GAP_JITTER_PARAM));
     addParam(createParamCentered<RoundBlackKnob>(Vec(densityX, globalY), module, Phrasing::DENSITY_PARAM));
     addParam(createParamCentered<RoundBlackKnob>(Vec(durJitterX, globalY), module, Phrasing::DURATION_JITTER_PARAM));
-    addParam(createParamCentered<CKSS>(Vec(guaranteeX, guaranteeY), module, Phrasing::GUARANTEE_ONE_PARAM));
+    addParam(createParamCentered<TL1105>(Vec(guaranteeX, guaranteeY), module, Phrasing::GUARANTEE_ONE_PARAM));
+    addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(Vec(guaranteeX, guaranteeY + 14.f), module, Phrasing::GUARANTEE_LIGHT_R));
 
     // addInput(createInputCentered<PJ301MPort>(Vec(densityX, 69.f), module, Phrasing::DENSITY_CV_INPUT));
 
     for (int i = 0; i < 4; i++) {
         float x = lane1X + i * laneSpacing + (i == 3 ? 1.f : 0.f);
         addParam(createParamCentered<TL1105>(Vec(x, enY), module, Phrasing::LANE1_ACTIVE_PARAM + i));
-        addChild(createLightCentered<MediumLight<GreenLight>>(Vec(x, lightY), module, Phrasing::LANE1_LIGHT + i));
+        addChild(createLightCentered<MediumLight<RedGreenBlueLight>>(Vec(x, lightY), module, Phrasing::LANE1_LIGHT_R + i * 3));
         addParam(createParamCentered<RoundBlackKnob>(Vec(x, weightY), module, Phrasing::WEIGHT1_PARAM + i));
         addParam(createParamCentered<RoundBlackKnob>(Vec(x, laneDurY), module, Phrasing::LANEDUR1_PARAM + i));
         addParam(createParamCentered<RoundBlackKnob>(Vec(x, floorY), module, Phrasing::FLOOR1_PARAM + i));
